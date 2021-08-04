@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "776e4719-4c36-45e7-a914-31c93458ec5f",
+		"_postman_id": "7da20eda-f825-47f7-b39b-b279793325e7",
 		"name": "Intersight-Examples",
 		"description": "## Cisco Intersight Postman Collection\n\nThe Cisco Intersight Postman Collection provides a subset of all Intersight calls. Cisco Intersight is based on the OpenAPI specification and as such a Postman collection can be created directly from the OpenAPI specification.\n\nHowever the OpenAPI specification does not provide the pre-requestion operation of siging the request.  A request signed with the user's API Key ID and their Secret Key is needed to authenticate the request.  Additionally, the pre-request script pre-processes the Body and URL Postman variable prior to signing the request.\n\nThe pre-request script requires two variables, that must be in the current Postman environment and named exactly as follows;\n\n**api-key** - which is available in the Intersight Web interafce after a successful API Key creation.\n**secret-key** - which is the complete text of the SecretKet.txt file that is downloaded after a successful API Key creation.\n\nWith defined API Key environment variables the provided calls will work within the limits of your Intersight account. With respect to licensing and account capabilities.\n\nThe collection also contains some basic test that determine the success or failure of the request and is the request completed in a certain amount of time.\n\nSeveral of the requests contain post-request tests to perform various activities\n\n- Update the Postman console\n- Set Environment variables\n- Unset Environment variables\n\nCisco DevNet provides several Learning Labs and an Inersight Sandbox to get you started using these Postman Calls.\n\n## Cisco DevNet resources\n\n- [Cisco Intersight DevNet Learning Labs ](https://developer.cisco.com/learning/modules/intersight-rest-api)\n\n- [Cisco Intersight DevNet Sandbox](https://devnetsandbox.cisco.com/RM/Diagram/Index/a63216d2-e891-4856-9f27-309ca61ec862?diagramType=Topology)",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
@@ -1459,12 +1459,7 @@
 							"variable": [
 								{
 									"key": "server",
-									"value": "{{server}}",
-									"type": "string",
-									"description": {
-										"content": "",
-										"type": "text/plain"
-									}
+									"value": "{{server}}"
 								}
 							]
 						}
@@ -2601,7 +2596,6 @@
 								{
 									"key": "Moid",
 									"value": "<string>",
-									"type": "string",
 									"description": "(Required) The unique Moid identifier of a resource instance."
 								}
 							]
@@ -2988,12 +2982,7 @@
 							],
 							"variable": [
 								{
-									"description": {
-										"content": "",
-										"type": "text/plain"
-									},
 									"key": "server",
-									"type": "string",
 									"value": "{{server}}"
 								}
 							]
@@ -5295,6 +5284,15 @@
 				}
 			},
 			"response": []
+		},
+		{
+			"name": "New Request",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": null
+			},
+			"response": []
 		}
 	],
 	"event": [
@@ -5312,6 +5310,7 @@
 					"    ",
 					"    ",
 					"    function computeHttpSignature(config, headerHash) {",
+					"      console.log(\"inside computeHttpSignature\");",
 					"      var template = 'keyId=\"${keyId}\",algorithm=\"${algorithm}\",headers=\"${headers}\",signature=\"${signature}\"',",
 					"          sig = template;",
 					"    ",
@@ -5321,20 +5320,35 @@
 					"        if (signingBase !== '') { signingBase += '\\n'; }",
 					"        signingBase += h.toLowerCase() + \": \" + headerHash[h];",
 					"      });",
-					"      console.log(signingBase);",
+					"  ",
+					"      // Verify PEM Pre-Encapsulation Boundary",
+					"      let re = /\\s*-----BEGIN (.*)-----\\s+/;",
+					"      let m = config.secretkey.match(re);",
+					"      if (!m) {",
+					"        throw \"Not a valid PEM pre boundary\";",
+					"      }",
 					"",
-					"      var kjursig = new KJUR.crypto.Signature({\"alg\": \"SHA256withRSA\"});",
+					"      pem_header = m[1];",
+					"      console.log(pem_header)",
+					"      if (pem_header == \"RSA PRIVATE KEY\") {",
+					"        kjursig = new KJUR.crypto.Signature({\"alg\": \"SHA256withRSA\"});",
+					"      } else if (pem_header == \"EC PRIVATE KEY\") {",
+					"        config.secretkey = config.secretkey.replace(pem_header, 'PRIVATE KEY');",
+					"        kjursig = new KJUR.crypto.Signature({\"alg\": \"SHA256withECDSA\"});",
+					"      } else {",
+					"        throw `Unsupported key: ${pem_header}`;",
+					"      }",
 					"      kjursig.init(config.secretkey);",
 					"      kjursig.updateString(signingBase);",
 					"      var hash = kjursig.sign();",
+					"      console.log(hash);",
 					"    ",
 					"      var signatureOptions = {",
 					"            keyId : config.keyId,",
 					"            algorithm: config.algorithm,",
 					"            headers: config.headers,",
-					"            signature : hextob64(hash) ",
+					"            signature : hextob64(hash)",
 					"          };",
-					"      console.log(signatureOptions)",
 					"    ",
 					"      // build sig string here",
 					"      Object.keys(signatureOptions).forEach(function(key) {",
@@ -5342,7 +5356,6 @@
 					"            value = (typeof signatureOptions[key] != 'string') ? signatureOptions[key].join(' ') : signatureOptions[key];",
 					"        sig = sig.replace(pattern, value);",
 					"      });",
-					"",
 					"      return sig;",
 					"    }",
 					"",
@@ -5428,19 +5441,19 @@
 					"          date : curDate,",
 					"          digest : computedDigest,",
 					"          host : host,",
-					"          '(request-target)' : request.method.toLowerCase() + ' ' + targetUrl.toLowerCase()",
+					"          '(request-target)' : request.method.toLowerCase() + ' ' + targetUrl",
 					"        };",
 					"    ",
 					"    console.log(headerHash);",
 					"    ",
 					"    var configHash = {",
-					"          algorithm : 'rsa-sha256',",
+					"          algorithm : 'hs2019',",
 					"          keyId : environment['api-key'],",
 					"          secretkey : environment['secret-key'],",
 					"          headers : [ '(request-target)', 'date', 'digest', 'host' ]",
 					"        };",
 					"    var sig = computeHttpSignature(configHash, headerHash);",
-					"    ",
+					"    console.log(sig);",
 					"    pm.collectionVariables.set('httpsig', sig);",
 					"    pm.collectionVariables.set('computed-digest', computedDigest);",
 					"    pm.collectionVariables.set(\"current-date\", curDate);",
@@ -5503,8 +5516,34 @@
 	],
 	"variable": [
 		{
+			"id": "fc7a06ef-2899-47fe-8769-1639837f615a",
 			"key": "server",
 			"value": "intersight.com"
+		},
+		{
+			"id": "10688c48-ec0c-4705-b6cf-0a46284eed71",
+			"key": "jsrsasign-js",
+			"value": ""
+		},
+		{
+			"id": "3b933ee0-808a-43e0-9571-c5794a866c63",
+			"key": "httpsig",
+			"value": ""
+		},
+		{
+			"id": "d2d01320-e663-4b68-8405-635940e853d9",
+			"key": "computed-digest",
+			"value": ""
+		},
+		{
+			"id": "0fa93915-5605-4d24-936d-4fb50fc10b8b",
+			"key": "current-date",
+			"value": ""
+		},
+		{
+			"id": "fd056a57-a46b-4f97-91b0-54397f8295c0",
+			"key": "target-url",
+			"value": ""
 		}
 	]
 }
