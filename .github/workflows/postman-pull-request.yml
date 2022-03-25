@@ -1,0 +1,32 @@
+name: postman-pull-request
+on: [push, pull_request]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [16.x]
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v3
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          registry-url: https://registry.npmjs.org/
+      - name: Install newman
+        run: npm install -g newman
+      - name: Create v3 environment file
+        run: |
+          cp Intersight.postman_environment.json postman_environment_v3.json
+          sed -i 's@API_KEY_PLACEHOLDER@${{secrets.testing_api_key_v3}}@g' postman_environment_v3.json
+          sed -i 's@API_SECRET_PLACEHOLDER@${{secrets.testing_api_secret_v3}}@g' postman_environment_v3.json
+      - name: Run collection tests using v3 key
+        run: newman run "Intersight-Examples.postman_collection.json" --folder "Testing" -e postman_environment_v3.json
+      - name: Create v2 environment file
+        run: |
+          cp Intersight.postman_environment.json postman_environment_v2.json
+          sed -i 's@API_KEY_PLACEHOLDER@${{secrets.testing_api_key_v2}}@g' postman_environment_v2.json
+          sed -i 's@API_SECRET_PLACEHOLDER@${{secrets.testing_api_secret_v2}}@g' postman_environment_v2.json
+      - name: Run collection tests using v2 key
+        run: newman run "Intersight-Examples.postman_collection.json" --folder "Testing" -e postman_environment_v2.json
