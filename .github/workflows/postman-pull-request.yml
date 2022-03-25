@@ -1,7 +1,8 @@
 name: postman-pull-request
 on: [push, pull_request]
 jobs:
-  build:
+  collection_tests:
+    if: github.repository == 'CiscoDevNet/intersight-postman'
     runs-on: ubuntu-latest
     strategy:
       matrix:
