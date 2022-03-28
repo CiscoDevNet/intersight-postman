@@ -1,5 +1,7 @@
 name: postman-pull-request
-on: [push, pull_request]
+on:
+  push:
+    branches: master
 jobs:
   collection_tests:
     if: github.repository == 'CiscoDevNet/intersight-postman'
