@@ -1,6 +1,6 @@
 {
     "info": {
-        "_postman_id": "422d4a29-2c53-40d4-9263-7d1414e92a4d",
+        "_postman_id": "171d1f22-4159-49d3-864d-fa5db1d81475",
         "name": "Intersight-Examples",
         "description": "## Cisco Intersight Postman Collection\n\nThe Cisco Intersight Postman Collection provides a subset of all Intersight calls. Cisco Intersight is based on the OpenAPI specification and as such a Postman collection can be created directly from the OpenAPI specification.\n\nHowever the OpenAPI specification does not provide the pre-requestion operation of siging the request.  A request signed with the user's API Key ID and their Secret Key is needed to authenticate the request.  Additionally, the pre-request script pre-processes the Body and URL Postman variable prior to signing the request.\n\nThe pre-request script requires two variables, that must be in the current Postman environment and named exactly as follows;\n\n**api-key** - which is available in the Intersight Web interafce after a successful API Key creation.\n**secret-key** - which is the complete text of the SecretKet.txt file that is downloaded after a successful API Key creation.\n\nWith defined API Key environment variables the provided calls will work within the limits of your Intersight account. With respect to licensing and account capabilities.\n\nThe collection also contains some basic test that determine the success or failure of the request and is the request completed in a certain amount of time.\n\nSeveral of the requests contain post-request tests to perform various activities\n\n- Update the Postman console\n- Set Environment variables\n- Unset Environment variables\n\nCisco DevNet provides several Learning Labs and an Inersight Sandbox to get you started using these Postman Calls.\n\n## Cisco DevNet resources\n\n- [Cisco Intersight DevNet Learning Labs ](https://developer.cisco.com/learning/modules/intersight-rest-api)\n\n- [Cisco Intersight DevNet Sandbox](https://devnetsandbox.cisco.com/RM/Diagram/Index/a63216d2-e891-4856-9f27-309ca61ec862?diagramType=Topology)",
         "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
@@ -1385,7 +1385,7 @@
                     "            let replaceVars = paramValue.match(/\\{\\{[\\w\\-]+\\}\\}/g);",
                     "            if(replaceVars) {",
                     "                replaceVars.forEach(replaceVar => {",
-                    "                    paramValue = paramValue.replace(replaceVar, pm.collectionVariables.get(replaceVar.replace('{{', '').replace('}}', '')));",
+                    "                    paramValue = paramValue.replace(replaceVar, pm.variables.get(replaceVar.replace('{{', '').replace('}}', '')));",
                     "                })",
                     "            }",
                     "            ",
